@@ -3,11 +3,11 @@ CONFIG?=config.mk
 include $(CONFIG)
 
 BUILD?=java purec simd
-SUBDIRS = $(BUILD) tester
+SUBDIRS?=$(BUILD) tester
 
 .PHONY: all java purec simd tester test clean
 
-all: $(SUBDIRS)
+all: $(BUILD)
 
 java:
 	$(MAKE) CONFIG=$(CONFIG) -C java

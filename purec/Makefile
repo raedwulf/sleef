@@ -7,7 +7,7 @@ include $(TOP)/$(CONFIG)
 LIB=libsleefdp.a libsleefsp.a libsleefdp.so libsleefsp.so
 HEADER=sleef.h
 
-all: $(LIB) iut
+all: $(LIB)
 
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
