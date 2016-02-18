@@ -6,13 +6,13 @@ PREFIX=/usr/local
 MANPREFIX=$(PREFIX)/share/man
 
 # compiler
-CC?=cc
-AR?=ar
-RANLIB?=ranlib
-CFLAGS?=-Wall -DNDEBUG -O3 -Wall -Wno-unused -Wno-attributes
-LDFLAGS?=-lm
-SOCFLAGS?=$(CFLAGS) -shared -fPIC
-CPPFLAGS?=
+CC=cc
+AR=ar
+RANLIB=ranlib
+CFLAGS=-Wall -DNDEBUG -O3 -Wall -Wno-unused -Wno-attributes
+LDFLAGS=-lm
+SOCFLAGS=$(CFLAGS) -shared -fPIC
+CPPFLAGS=
 
 # testers
 TESTER_DIR=$(TOP)/tester
