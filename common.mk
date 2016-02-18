@@ -9,7 +9,7 @@ MANPREFIX=$(PREFIX)/share/man
 CC=cc
 AR=ar
 RANLIB=ranlib
-CFLAGS=-Wall -DNDEBUG -O3 -Wall -Wno-unused -Wno-attributes
+CFLAGS=-Wall -DNDEBUG -O3 -Wall -Wno-unused -Wno-attributes -std=c99 -D_XOPEN_SOURCE=500
 LDFLAGS=-lm
 SOCFLAGS=$(CFLAGS) -shared -fPIC
 CPPFLAGS=

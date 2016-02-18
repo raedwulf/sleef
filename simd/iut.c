@@ -8,8 +8,6 @@
 #include <inttypes.h>
 
 #include <math.h>
-#include <bits/nan.h>
-#include <bits/inf.h>
 
 #include <unistd.h>
 #include <assert.h>
