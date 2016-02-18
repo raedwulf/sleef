@@ -9,13 +9,18 @@ ifneq (,$(findstring x86,$(ARCH)))
 	avx_CFLAGS=-DENABLE_AVX -mavx
 	avx2_CFLAGS=-DENABLE_AVX2 -mavx2 -mfma
 	fma4_CFLAGS=-DENABLE_FMA4 -mavx -mfma4
+	ENABLE_DP=1
 else ifneq (,$(findstring arm,$(ARCH)))
 	SIMD=neon
 	DEFAULTSIMD?=neon
-	neon_CFLAGS=-mfpu=neon
+	neon_CFLAGS=-DENABLE_NEON -mfpu=neon
+	ENABLE_DP=0
 endif
 
-TARGET_PREFIX=$(addprefix libsleefsimddp-, $(SIMD)) $(addprefix libsleefsimdsp-, $(SIMD))
+TARGET_PREFIX=$(addprefix libsleefsimdsp-, $(SIMD))
+ifeq ($(ENABLE_DP),1)
+	TARGET_PREFIX+=$(addprefix libsleefsimddp-, $(SIMD))
+endif
 LIB=$(addsuffix .so, $(TARGET_PREFIX)) $(addsuffix .a, $(TARGET_PREFIX))
 TARGETS=$(addprefix iut-, $(SIMD)) $(LIB)
 HEADER=$(addsuffix .h,$(addprefix helper, $(SIMD))) dd.h df.h nonnumber.h sleefsimd.h
@@ -41,8 +46,13 @@ libsleefsimddp-%.so: sleefsimddp.c
 lib%.a: %.o
 	$(AR) rcs $@ $<
 
+ifeq ($(ENABLE_DP),1)
 iut-%: sleefsimddp-%.o sleefsimdsp-%.o iut.c
-	$(CC) -o $@ $(CFLAGS) $($(call getarch,$@,)_CFLAGS) $^ $(LDFLAGS)
+	$(CC) -o $@ $(CFLAGS) $($(call getarch,$@)_CFLAGS) $^ $(LDFLAGS)
+else
+iut-%: sleefsimdsp-%.o iut.c
+	$(CC) -o $@ $(CFLAGS) $($(call getarch,$@)_CFLAGS) $^ $(LDFLAGS)
+endif
 
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/lib
@@ -66,16 +76,18 @@ uninstall:
 testers:
 	$(MAKE) CONFIG=$(CONFIG) -C $(TESTER_DIR)
 
-ifneq (,$(findstring arm,$(ARCH)))
-test: iut-neon testers
-	../tester/testersp --flushtozero ./iutneon
-	../tester/testerspu1 --flushtozero ./iutneon
-else
+ifeq ($(ENABLE_DP),1)
 test: $(addprefix iut-, $(SIMD)) testers
 	for simd in $(SIMD); do \
 		for tester in $(TESTERS_PATH); do \
 		    $$tester ./iut-$$simd; \
 		done \
+	done
+else
+test:$(addprefix iut-, $(SIMD)) testers
+	for simd in $(SIMD); do \
+		../tester/testersp --flushtozero ./iut-$$simd; \
+		../tester/testerspu1 --flushtozero ./iut-$$simd; \
 	done
 endif
 
