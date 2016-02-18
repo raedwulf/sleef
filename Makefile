@@ -1,11 +1,44 @@
-test :
-	cd java; make test
-	cd purec; make test
-	cd simd; make testsse2 testavx
+TOP=$(shell pwd)
+CONFIG?=$(TOP)/config.mk
+include $(CONFIG)
 
-clean :
+BUILD?=java purec simd
+SUBDIRS = $(BUILD) tester
+
+.PHONY: all java purec simd tester test clean
+
+all: $(SUBDIRS)
+
+java:
+	$(MAKE) CONFIG=$(CONFIG) -C java
+
+purec:
+	$(MAKE) CONFIG=$(CONFIG) -C purec
+
+simd:
+	$(MAKE) CONFIG=$(CONFIG) -C simd
+
+tester:
+	$(MAKE) CONFIG=$(CONFIG) -C tester
+
+install:
+	for toinst in $(BUILD); do \
+	    $(MAKE) CONFIG=$(CONFIG) -C $$toinst install; \
+	done
+
+uninstall:
+	for toinst in $(BUILD); do \
+	    $(MAKE) CONFIG=$(CONFIG) -C $$toinst uninstall; \
+	done
+	rmdir -f $(DESTDIR)$(PREFIX)/include/sleef
+
+test:
+	for totest in $(BUILD); do \
+	    $(MAKE) CONFIG=$(CONFIG) -C $$totest test; \
+	done
+
+clean:
 	rm -f *~
-	cd java; make clean
-	cd purec; make clean
-	cd simd; make clean
-	cd tester; make clean
+	for subdir in $(SUBDIRS); do \
+	    $(MAKE) CONFIG=$(CONFIG) -C $$subdir clean; \
+	done

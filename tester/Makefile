@@ -1,16 +1,16 @@
-all : tester testersp testeru1 testerspu1
+TOP?=..
+CONFIG?=config.mk
+include $(TOP)/$(CONFIG)
 
-tester : tester.c
-	gcc -Wall tester.c -lm -lmpfr -o tester
+.PHONY: all clean
 
-testeru1 : testeru1.c
-	gcc -Wall testeru1.c -lm -lmpfr -o testeru1
+LDFLAGS+=-lmpfr
+TARGETS=tester testersp testeru1 testerspu1
 
-testersp : testersp.c
-	gcc -Wall testersp.c -lm -lmpfr -o testersp
+all: $(TARGETS)
 
-testerspu1 : testerspu1.c
-	gcc -Wall testerspu1.c -lm -lmpfr -o testerspu1
+tester%: tester%.c
+	$(CC) $(CFLAGS) $< $(LDFLAGS) -o $@
 
-clean :
+clean:
 	rm -f *~ *.o tester testersp testeru1 testerspu1

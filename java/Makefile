@@ -1,3 +1,5 @@
+.PHONY: doc test install clean
+
 IUT.class : IUT.java org/naokishibata/sleef/FastMath.java
 	javac IUT.java
 
@@ -13,6 +15,9 @@ doc : org/naokishibata/sleef/FastMath.java
 test : IUT.class ../tester/tester ../tester/testersp
 	../tester/tester java -ea IUT
 	../tester/testersp java -ea IUT
+
+install:
+	
 
 clean :
 	rm -f *~ IUT.class

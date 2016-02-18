@@ -1,25 +1,42 @@
-CC=gcc
+TOP?=..
+CONFIG?=config.mk
+include $(TOP)/$(CONFIG)
 
-iut : sleefdp.c sleefsp.c iut.c
-	$(CC) -Wall -DNDEBUG sleefdp.c sleefsp.c iut.c -o iut -lm
+.PHONY: all testers test install clean
 
-../tester/tester :
-	cd ../tester; make tester
+LIB=libsleefdp.a libsleefsp.a libsleefdp.so libsleefsp.so
+HEADER=sleef.h
 
-../tester/testeru1 :
-	cd ../tester; make testeru1
+all: $(LIB) iut
 
-../tester/testersp :
-	cd ../tester; make testersp
+%.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-../tester/testerspu1 :
-	cd ../tester; make testerspu1
+lib%.so: %.c
+	$(CC) -c -o $@ $< $(SOCFLAGS)
 
-test : iut ../tester/tester ../tester/testeru1 ../tester/testersp ../tester/testerspu1
-	../tester/tester ./iut
-	../tester/testeru1 ./iut
-	../tester/testersp ./iut
-	../tester/testerspu1 ./iut
+lib%.a: %.o
+	$(AR) rcs $@ $<
 
-clean :
+iut: iut.o sleefdp.o sleefsp.o
+	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
+
+testers:
+	$(MAKE) CONFIG=$(CONFIG) -C $(TESTER_DIR)
+
+test: iut testers
+	for tester in $(TESTERS_PATH) ; do \
+	    $$tester ./iut; \
+	done
+
+install: all
+	mkdir -p $(DESTDIR)$(PREFIX)/lib
+	cp -f $(LIB) $(DESTDIR)$(PREFIX)/lib
+	mkdir -p $(DESTDIR)$(PREFIX)/include/sleef
+	cp -f $(HEADER) $(DESTDIR)$(PREFIX)/include/sleef
+
+uninstall:
+	cd $(DESTDIR)$(PREFIX)/include/sleef && rm -f $(HEADER)
+
+clean:
 	rm -f *~ *.o iut

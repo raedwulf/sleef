@@ -1,56 +1,71 @@
-CC=gcc
-OPT=-O -Wall -Wno-unused -Wno-attributes
-SDE=/opt/sde-bdw-external-5.38.0-2013-01-03-lin/sde
+TOP?=..
+CONFIG?=config.mk
+include $(TOP)/$(CONFIG)
 
-all : testsse2 testavx
+ifneq (,$(findstring x86,$(ARCH)))
+	SIMD=sse2 avx avx2 fma4
+	sse2_CFLAGS=-DENABLE_SSE2 -msse2
+	avx_CFLAGS=-DENABLE_AVX -mavx
+	avx2_CFLAGS=-DENABLE_AVX2 -mavx2 -mfma
+	fma4_CFLAGS=-DENABLE_FMA4 -mavx -mfma4
+else ifneq (,$(findstring arm,$(ARCH)))
+	SIMD=neon
+	neon_CFLAGS=-mfpu=neon
+endif
 
-iutsse2 : sleefsimddp.c sleefsimdsp.c helpersse2.h iut.c
-	$(CC) $(OPT) -DENABLE_SSE2 -msse2 iut.c sleefsimddp.c sleefsimdsp.c -o iutsse2 -lm
+TARGET_PREFIX=$(addprefix libsleefsimddp-, $(SIMD)) $(addprefix libsleefsimdsp-, $(SIMD))
+LIB=$(addsuffix .so, $(TARGET_PREFIX)) $(addsuffix .a, $(TARGET_PREFIX))
+TARGETS=$(addprefix iut-, $(SIMD)) $(LIB)
+HEADER=$(addsuffix .h,$(addprefix helper, $(SIMD))) dd.h df.h nonnumber.h sleefsimd.h
 
-iutavx : sleefsimddp.c sleefsimdsp.c helperavx.h iut.c
-	$(CC) $(OPT) -DENABLE_AVX -mavx iut.c sleefsimddp.c sleefsimdsp.c -o iutavx -lm
+getarch=$(lastword $(subst -, ,$(patsubst %.$(lastword $(subst ., ,$(1))),%,$(1))))
 
-iutavx2 : sleefsimddp.c sleefsimdsp.c helperavx2.h iut.c
-	$(CC) $(OPT) -DENABLE_AVX2 -mavx2 -mfma iut.c sleefsimddp.c sleefsimdsp.c -o iutavx2 -lm
+.PHONY: all clean testers test clean
 
-iutfma4 : sleefsimddp.c sleefsimdsp.c helperfma4.h iut.c
-	$(CC) $(OPT) -DENABLE_FMA4 -mavx -mfma4 iut.c sleefsimddp.c sleefsimdsp.c -o iutfma4 -lm
+all: $(TARGETS)
 
-../tester/tester :
-	cd ../tester; make tester
+sleefsimdsp-%.o: sleefsimdsp.c
+	$(CC) $($(call getarch,$@)_CFLAGS) -c -o $@ $< $(CFLAGS)
 
-../tester/testeru1 :
-	cd ../tester; make testeru1
+libsleefsimdsp-%.so: sleefsimdsp.c
+	$(CC) $($(call getarch,$@)_CFLAGS) -c -o $@ $< $(SOCFLAGS)
 
-../tester/testersp :
-	cd ../tester; make testersp
+sleefsimddp-%.o: sleefsimddp.c
+	$(CC) $($(call getarch,$@)_CFLAGS) -c -o $@ $< $(CFLAGS)
 
-../tester/testerspu1 :
-	cd ../tester; make testerspu1
+libsleefsimddp-%.so: sleefsimddp.c
+	$(CC) $($(call getarch,$@)_CFLAGS) -c -o $@ $< $(SOCFLAGS)
 
-testsse2 : iutsse2 ../tester/tester ../tester/testeru1 ../tester/testersp ../tester/testerspu1
-	../tester/tester ./iutsse2
-	../tester/testeru1 ./iutsse2
-	../tester/testersp ./iutsse2
-	../tester/testerspu1 ./iutsse2
+lib%.a: %.o
+	$(AR) rcs $@ $<
 
-testavx : iutavx ../tester/tester ../tester/testeru1 ../tester/testersp ../tester/testerspu1
-	../tester/tester ./iutavx
-	../tester/testeru1 ./iutavx
-	../tester/testersp ./iutavx
-	../tester/testerspu1 ./iutavx
+iut-%: sleefsimddp-%.o sleefsimdsp-%.o iut.c
+	$(CC) $($(call getarch,$@,)_CFLAGS) -o $@ $(CFLAGS) $^ $(LDFLAGS)
 
-testavx2 : iutavx2 ../tester/tester ../tester/testeru1 ../tester/testersp ../tester/testerspu1
-	../tester/tester $(SDE) -- ./iutavx2
-	../tester/testeru1 $(SDE) -- ./iutavx2
-	../tester/testersp $(SDE) -- ./iutavx2
-	../tester/testerspu1 $(SDE) -- ./iutavx2
+install: all
+	mkdir -p $(DESTDIR)$(PREFIX)/lib
+	cp -f $(LIB) $(DESTDIR)$(PREFIX)/lib
+	mkdir -p $(DESTDIR)$(PREFIX)/include/sleef
+	cp -f $(HEADER) $(DESTDIR)$(PREFIX)/include/sleef
 
-testfma4 : iutfma4 ../tester/tester ../tester/testeru1 ../tester/testersp ../tester/testerspu1
-	../tester/tester ./iutfma4
-	../tester/testeru1 ./iutfma4
-	../tester/testersp ./iutfma4
-	../tester/testerspu1 ./iutfma4
+uninstall:
+	cd $(DESTDIR)$(PREFIX)/include/sleef && rm -f $(HEADER)
 
-clean :
-	rm -f *~ *.o *.s iutsse2 iutavx iutavx2 iutfma4 iutneon
+testers:
+	$(MAKE) CONFIG=$(CONFIG) -C $(TESTER_DIR)
+
+ifneq (,$(findstring arm,$(ARCH)))
+test: iut-neon testers
+	../tester/testersp --flushtozero ./iutneon
+	../tester/testerspu1 --flushtozero ./iutneon
+else
+test: $(addprefix iut-, $(SIMD)) testers
+	for simd in $(SIMD); do \
+		for tester in $(TESTERS_PATH); do \
+		    $$tester ./iut-$$simd; \
+		done \
+	done
+endif
+
+clean:
+	rm -f *~ *.o *.s iut-* *.so *.a
