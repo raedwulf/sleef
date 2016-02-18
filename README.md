@@ -38,7 +38,7 @@ Repository : https://github.com/raedwulf/sleef
 History
 -------
 
-2.80r Added new GNU Makefiles to build the library and install into
+2.80a Added new GNU Makefiles to build the library and install into
 a 'nix-based system.
 
 2.80 Added support for ARM NEON. Added higher accuracy single
