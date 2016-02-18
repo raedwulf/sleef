@@ -1,3 +1,9 @@
+SLEEF 2.80a with patched Makefiles
+=================================
+
+Original README
+---------------
+
 In this library, functions for evaluating some elementary functions
 are implemented. The algorithm is intentended for efficient evaluation
 utilizing SIMD instruction sets like SSE or AVX, but it is also fast
@@ -16,8 +22,24 @@ Author : Naoki Shibata
 Main download page : http://shibatch.sourceforge.net/
 
 
+Additions README
+----------------
+
+Vanilla code-base with largely rewritten Makefiles that allow
+building shared and static libraries for SLEEF.
+
+This code remains public domain.
+
+Author : Tai Chi Minh Ralph Eastwood
+
+Repository : https://github.com/raedwulf/sleef
+
 
 History
+-------
+
+2.80r Added new GNU Makefiles to build the library and install into
+a 'nix-based system.
 
 2.80 Added support for ARM NEON. Added higher accuracy single
 precision functions : sinf_u1, cosf_u1, sincosf_u1, tanf_u1, asinf_u1,
