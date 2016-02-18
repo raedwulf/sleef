@@ -1,5 +1,5 @@
-TOP=$(shell pwd)
-CONFIG?=$(TOP)/config.mk
+TOP=.
+CONFIG?=config.mk
 include $(CONFIG)
 
 BUILD?=java purec simd

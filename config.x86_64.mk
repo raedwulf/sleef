@@ -1,2 +1,2 @@
-ARCH=x86-64
+ARCH=x86_64
 include $(TOP)/common.mk
