@@ -27,22 +27,22 @@ getarch=$(lastword $(subst -, ,$(patsubst %.$(lastword $(subst ., ,$(1))),%,$(1)
 all: $(TARGETS)
 
 sleefsimdsp-%.o: sleefsimdsp.c
-	$(CC) $($(call getarch,$@)_CFLAGS) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) $($(call getarch,$@)_CFLAGS)
 
 libsleefsimdsp-%.so: sleefsimdsp.c
-	$(CC) $($(call getarch,$@)_CFLAGS) -c -o $@ $< $(SOCFLAGS)
+	$(CC) -c -o $@ $< $(SOCFLAGS) $($(call getarch,$@)_CFLAGS)
 
 sleefsimddp-%.o: sleefsimddp.c
-	$(CC) $($(call getarch,$@)_CFLAGS) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) $($(call getarch,$@)_CFLAGS)
 
 libsleefsimddp-%.so: sleefsimddp.c
-	$(CC) $($(call getarch,$@)_CFLAGS) -c -o $@ $< $(SOCFLAGS)
+	$(CC) -c -o $@ $< $(SOCFLAGS) $($(call getarch,$@)_CFLAGS)
 
 lib%.a: %.o
 	$(AR) rcs $@ $<
 
 iut-%: sleefsimddp-%.o sleefsimdsp-%.o iut.c
-	$(CC) $($(call getarch,$@,)_CFLAGS) -o $@ $(CFLAGS) $^ $(LDFLAGS)
+	$(CC) -o $@ $(CFLAGS) $($(call getarch,$@,)_CFLAGS) $^ $(LDFLAGS)
 
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/lib
