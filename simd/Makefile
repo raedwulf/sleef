@@ -4,12 +4,14 @@ include $(TOP)/$(CONFIG)
 
 ifneq (,$(findstring x86,$(ARCH)))
 	SIMD=sse2 avx avx2 fma4
+	DEFAULTSIMD?=sse2
 	sse2_CFLAGS=-DENABLE_SSE2 -msse2
 	avx_CFLAGS=-DENABLE_AVX -mavx
 	avx2_CFLAGS=-DENABLE_AVX2 -mavx2 -mfma
 	fma4_CFLAGS=-DENABLE_FMA4 -mavx -mfma4
 else ifneq (,$(findstring arm,$(ARCH)))
 	SIMD=neon
+	DEFAULTSIMD?=neon
 	neon_CFLAGS=-mfpu=neon
 endif
 
@@ -44,7 +46,17 @@ iut-%: sleefsimddp-%.o sleefsimdsp-%.o iut.c
 
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/lib
-	cp -f $(LIB) $(DESTDIR)$(PREFIX)/lib
+	for lib in $(LIB); do \
+		cp -f $$lib $(DESTDIR)$(PREFIX)/lib/$$lib.$(MAJOR); \
+		pushd $(DESTDIR)$(PREFIX)/lib; \
+		ln -s $$lib.$(MAJOR) $$lib; \
+		popd; \
+	done
+	pushd $(DESTDIR)$(PREFIX)/lib && \
+	ln -s libsleefsimdsp-$(DEFAULTSIMD).a libsleefsimdsp.a && \
+	ln -s libsleefsimddp-$(DEFAULTSIMD).a libsleefsimddp.a && \
+	ln -s libsleefsimdsp-$(DEFAULTSIMD).so libsleefsimdsp.so && \
+	ln -s libsleefsimddp-$(DEFAULTSIMD).so libsleefsimddp.so && popd
 	mkdir -p $(DESTDIR)$(PREFIX)/include/sleef
 	cp -f $(HEADER) $(DESTDIR)$(PREFIX)/include/sleef
 

@@ -1,4 +1,5 @@
 ARCH=arm
+DEFAULTSIMD=neon
 
 include $(TOP)/common.mk
 

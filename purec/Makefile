@@ -31,7 +31,17 @@ test: iut testers
 
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/lib
-	cp -f $(LIB) $(DESTDIR)$(PREFIX)/lib
+	for lib in $(LIB); do \
+		cp -f $$lib $(DESTDIR)$(PREFIX)/lib/$$lib.$(MAJOR); \
+		pushd $(DESTDIR)$(PREFIX)/lib; \
+		ln -s $$lib.$(MAJOR) $$lib; \
+		popd; \
+	done
+	pushd $(DESTDIR)$(PREFIX)/lib && \
+	ln -s libsleefsimdsp-$(DEFAULTSIMD).a libsleefsimdsp.a && \
+	ln -s libsleefsimddp-$(DEFAULTSIMD).a libsleefsimddp.a && \
+	ln -s libsleefsimdsp-$(DEFAULTSIMD).so libsleefsimdsp.so && \
+	ln -s libsleefsimddp-$(DEFAULTSIMD).so libsleefsimddp.so && popd
 	mkdir -p $(DESTDIR)$(PREFIX)/include/sleef
 	cp -f $(HEADER) $(DESTDIR)$(PREFIX)/include/sleef
 
